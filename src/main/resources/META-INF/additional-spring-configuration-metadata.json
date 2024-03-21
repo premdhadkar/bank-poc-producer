@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "user.heartbeat.interval.ms",
+  "type": "java.lang.String",
+  "description": "Customer's Heartbeat interval, time between two successive heartbeats of any user"
+}]}
