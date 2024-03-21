@@ -2,6 +2,8 @@ package com.abcbank.userinactivity.bankpocproducer.model;
 
 import java.sql.Timestamp;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,8 +15,10 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Customer {
+@Entity(name = "customer")
 
+public class Customer {
+	@Id
 	public Integer accno;
 
 	public String description;
