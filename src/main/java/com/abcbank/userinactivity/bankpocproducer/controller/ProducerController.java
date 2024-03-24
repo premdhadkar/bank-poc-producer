@@ -2,6 +2,7 @@ package com.abcbank.userinactivity.bankpocproducer.controller;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -33,10 +35,9 @@ public class ProducerController {
 
 	@Autowired
 	KafkaTemplate<Integer, Customer> kafkaTemplate;
-	
+
 	@Autowired
 	CustomerRepository customerRepository;
-	
 
 	@PostMapping("/start-heart-beat")
 	public ResponseEntity<Object> heartbeat(@RequestBody Customer customer) throws InterruptedException {
@@ -71,7 +72,7 @@ public class ProducerController {
 		Thread.sleep(1000);
 		return new ResponseEntity<Object>(response, HttpStatus.CREATED);
 	}
-	
+
 	@PostMapping("/start-heart-beat-no-loop")
 	public ResponseEntity<Object> heartbeatNoLoop(@RequestBody Customer customer) throws InterruptedException {
 		try {
@@ -114,17 +115,24 @@ public class ProducerController {
 //	}
 
 	@PostMapping("/signup")
-	public ResponseEntity<Object> signup(@RequestBody Customer customer) throws InterruptedException, ExecutionException    {
+	public ResponseEntity<Object> signup(@RequestBody Customer customer)
+			throws InterruptedException, ExecutionException {
 		Timestamp ts = Timestamp.from(Instant.now());
 		customer.setDescription("User Created");
 		customer.setTimestamp(ts);
-		customer.setPassword(customer.getPassword()==null?"1234":customer.getPassword());
+		customer.setPassword(customer.getPassword() == null ? "1234" : customer.getPassword());
 		Customer singupSendResult = customerRepository.save(customer);
-		
+
 		if (singupSendResult != null)
 			return new ResponseEntity<Object>(customer, HttpStatus.CREATED);
 		else
-			return new ResponseEntity<Object>(new Exception("Unable to Create first Signup, due to database error"), HttpStatus.NOT_IMPLEMENTED);
+			return new ResponseEntity<Object>(new Exception("Unable to Create first Signup, due to database error"),
+					HttpStatus.NOT_IMPLEMENTED);
 	}
 
+	@GetMapping("/getAllCustomers")
+	public List<Customer> getAllCustomers() {
+		List<Customer> result = customerRepository.findAll();
+		return result;
+	}
 }
