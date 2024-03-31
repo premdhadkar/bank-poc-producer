@@ -11,15 +11,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.abcbank.userinactivity.bankpocproducer.model.Customer;
 import com.abcbank.userinactivity.bankpocproducer.repository.CustomerRepository;
 
-@Controller
+@RestController
 public class ProducerController {
 
 	private static SendResult<Integer, Customer> sendResult = null;
@@ -27,6 +27,10 @@ public class ProducerController {
 	@Value("${topic.heartbeat}")
 	private String heartbeatTopic;
 
+
+	@Value("${topic.transaction}")
+	private String transaction;
+	
 	@Value("${topic.signup-history}")
 	private String signupHistoryTopic;
 
@@ -99,21 +103,6 @@ public class ProducerController {
 		return new ResponseEntity<Object>(response, HttpStatus.CREATED);
 	}
 
-//	@PostMapping("/signup")
-//	public ResponseEntity<Object> signup(@RequestBody Customer customer) throws InterruptedException, ExecutionException    {
-//		Timestamp ts = Timestamp.from(Instant.now());
-//		customer.setDescription("User Created");
-//		customer.setTimestamp(ts);
-//		SendResult<Integer, Customer> singupSendResult = kafkaTemplate.send(signupHistoryTopic, customer.getAccno(), customer).get();
-//
-//		
-//		
-//		if (singupSendResult != null)
-//			return new ResponseEntity<Object>(customer, HttpStatus.CREATED);
-//		else
-//			return new ResponseEntity<Object>(new Exception("Unable to Create first Signup, due to producer error"), HttpStatus.NOT_IMPLEMENTED);
-//	}
-
 	@PostMapping("/signup")
 	public ResponseEntity<Object> signup(@RequestBody Customer customer)
 			throws InterruptedException, ExecutionException {
@@ -134,5 +123,26 @@ public class ProducerController {
 	public List<Customer> getAllCustomers() {
 		List<Customer> result = customerRepository.findAll();
 		return result;
+	}
+	
+	@PostMapping("/transaction")
+	public ResponseEntity<Object> transaction(@RequestBody Customer customer){
+		try {
+			customer.setDescription("transaction");
+			customer.setTimestamp(Timestamp.from(Instant.now()));
+			sendResult = kafkaTemplate.send(transaction, customer.getAccno(), customer).get();
+			System.out.println("Transaction Done; Acc No: " + customer.getAccno() + " Offset: "
+					+ sendResult.getRecordMetadata().offset());
+		
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Customer response = Customer.builder().accno(customer.getAccno()).transaction(customer.getTransaction()).timestamp(Timestamp.from(Instant.now()))
+				.description("Transaction Done").build();
+		return new ResponseEntity<Object>(response, HttpStatus.CREATED);
 	}
 }
